@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LearnCast Hub – Nigerian Exam CBT Practice</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Sora:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-inner">
+            <a class="logo-wrap" href="#">
+                <img class="logo-img" src="learn1.png" alt="LearnCast Hub Logo" onerror="this.style.display='none'">
+                <div class="logo-text">LearnCast<span>Your Ambition. Our Priority.</span></div>
+            </a>
+            <span class="header-tagline">🇳🇬 Ace JAMB, WAEC, NECO & More</span>
+            <button class="dark-toggle" onclick="toggleDark()">🌙 Dark Mode</button>
+        </div>
+    </header>
+
+    <!-- HOME SCREEN -->
+    <div id="home-screen" class="screen active">
+        <div class="hero">
+            <div class="hero-badge">✅ Free · No Registration · Instant Access</div>
+            <h1>Practice <em>Smart</em>, Pass <em>First Time</em></h1>
+            <p>Real exam simulation for JAMB, WAEC, NECO, GCE & NABTEB. Timed CBT sessions with detailed explanations.
+            </p>
+            <div class="hero-stats">
+                <div class="stat-chip"><strong>5</strong><span>Exam Types</span></div>
+                <div class="stat-chip"><strong>20+</strong><span>Subjects</span></div>
+                <div class="stat-chip"><strong>250+</strong><span>Questions</span></div>
+                <div class="stat-chip"><strong>25min</strong><span>Per Session</span></div>
+            </div>
+        </div>
+
+        <div class="section-title">Choose Your Exam</div>
+        <div class="exam-grid" id="exam-grid"></div>
+
+        <div id="subject-section" style="display:none">
+            <div class="section-title">Select Subject</div>
+            <div class="subject-grid" id="subject-grid"></div>
+        </div>
+
+        <div id="start-section" class="start-section" style="display:none">
+            <h3>Ready to Start? 🚀</h3>
+            <p id="start-desc">You'll get 20 questions with smart rotation</p>
+            <div class="start-info">
+                <div class="start-info-item">📝 20 Questions</div>
+                <div class="start-info-item">⏱️ 25 Minutes</div>
+                <div class="start-info-item">🔀 Smart Shuffle</div>
+            </div>
+            <button class="btn-start" id="start-btn" onclick="startExam()">Start CBT Session ▶</button>
+        </div>
+    </div>
+
+    <!-- CBT SCREEN -->
+    <div id="cbt-screen" class="screen">
+        <div class="cbt-header">
+            <div class="cbt-meta">
+                <span class="cbt-exam-badge" id="cbt-exam-badge">JAMB</span>
+                <span class="cbt-subject-name" id="cbt-subject-name">Mathematics</span>
+            </div>
+            <div class="timer-wrap">
+                <span class="timer-icon">⏱️</span>
+                <span class="timer-display" id="timer-display">25:00</span>
+            </div>
+        </div>
+
+        <div class="progress-bar-wrap">
+            <div class="progress-bar" id="progress-bar" style="width:5%"></div>
+        </div>
+
+        <div class="cbt-body">
+            <div class="question-panel">
+                <div class="q-number" id="q-number">Question 1 of 20</div>
+                <div class="q-text" id="q-text">Loading question...</div>
+                <ul class="options-list" id="options-list"></ul>
+                <div class="q-nav-bottom">
+                    <button class="btn-nav" id="btn-prev" onclick="prevQuestion()">← Previous</button>
+                    <button class="btn-submit-cbt" onclick="confirmSubmit()">Submit Exam ✓</button>
+                    <button class="btn-nav" id="btn-next" onclick="nextQuestion()">Next →</button>
+                </div>
+            </div>
+            <div class="grid-panel">
+                <div class="grid-panel-title">Questions</div>
+                <div class="q-grid" id="q-grid"></div>
+                <div class="grid-legend">
+                    <div class="legend-item">
+                        <div class="legend-dot current"></div>Current
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot answered"></div>Answered
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot unanswered"></div>Not answered
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- RESULT SCREEN -->
+    <div id="result-screen" class="screen">
+        <div class="result-hero">
+            <div class="result-score-circle">
+                <span class="result-score-num" id="res-score">0</span>
+                <span class="result-score-total" id="res-total">/ 20</span>
+            </div>
+            <div class="result-grade" id="res-grade">Excellent! 🏆</div>
+            <div class="result-percent" id="res-percent">90%</div>
+            <div class="result-sub" id="res-sub">JAMB · Mathematics · 25 minutes</div>
+        </div>
+
+        <div class="result-stats">
+            <div class="stat-card correct"><strong id="res-correct">18</strong><span>Correct</span></div>
+            <div class="stat-card wrong"><strong id="res-wrong">2</strong><span>Wrong</span></div>
+            <div class="stat-card unanswered"><strong id="res-skipped">0</strong><span>Skipped</span></div>
+        </div>
+
+        <div class="result-actions">
+            <button class="btn-action primary" onclick="retryExam()">🔁 Retry Subject</button>
+            <button class="btn-action outline" onclick="goHome()">🏠 New Exam</button>
+            <button class="btn-action ghost" onclick="downloadResult()">📄 Save Result</button>
+        </div>
+
+        <div class="review-section">
+            <h3>📋 Detailed Review</h3>
+            <div id="review-list"></div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+
+</html>
