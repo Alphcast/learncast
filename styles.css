@@ -45,6 +45,47 @@ body {
     overflow-x: hidden
 }
 
+body {
+    overflow-x: hidden;
+}
+
+/* Container */
+.ticker-container {
+    width: 100%;
+    overflow: hidden;
+    background: #111;
+    color: #fff;
+    padding: 10px 0;
+    border-top: 2px solid #444;
+    border-bottom: 2px solid #444;
+}
+
+/* Moving content */
+.ticker {
+    display: inline-block;
+    white-space: nowrap;
+    padding-left: 100%;
+    animation: scroll-left 20s linear infinite;
+}
+
+/* Individual items */
+.ticker span {
+    margin-right: 50px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+/* Animation */
+@keyframes scroll-left {
+    0% {
+        transform: translateX(0%);
+    }
+
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
 /* ===== HEADER ===== */
 header {
     background: var(--white);
