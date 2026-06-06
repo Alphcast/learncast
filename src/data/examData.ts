@@ -1,4 +1,4 @@
-import type { ExamData } from '../types'
+import type { ExamData, ExamType } from '../types'
 
 export const EXAM_DATA: ExamData = {
   JAMB: { icon: '🎓', subjects: ['Use of English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Commerce', 'Accounting', 'Literature in English', 'Government', 'CRS', 'Islamic Studies', 'Yoruba', 'Arabic'] },
@@ -11,4 +11,4 @@ export const EXAM_DATA: ExamData = {
   THEORY: { icon: '📝', subjects: ['English Language', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Government', 'Literature in English', 'CRS', 'Commerce'] },
 }
 
-export const EXAM_TYPES = Object.keys(EXAM_DATA) as Array<keyof typeof EXAM_DATA>
+export const EXAM_TYPES: ExamType[] = ['JAMB', 'WAEC', 'NECO', 'GCE', 'NABTEB', 'TOEFL', 'POSTUTME', 'THEORY']
