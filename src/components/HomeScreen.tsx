@@ -17,8 +17,8 @@ export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, 
   const isPostUtme = selectedExam === 'POSTUTME'
   const isTheory = selectedExam === 'THEORY'
   const theoryExam = isTheory ? selectedUniversity : null
-  const subjects = selectedExam
-    ? (isTheory && theoryExam ? EXAM_DATA[theoryExam].subjects : EXAM_DATA[selectedExam].subjects)
+  const subjects: Subject[] = selectedExam
+    ? (isTheory && theoryExam ? EXAM_DATA[theoryExam as ExamType].subjects : EXAM_DATA[selectedExam].subjects)
     : []
 
   const canStart = (isPostUtme || isTheory)
