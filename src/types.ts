@@ -56,9 +56,14 @@ export type Subject =
   | 'Baze University'
   | 'Afe Babalola University'
   | 'Ajayi Crowther University'
+  | 'Further Mathematics'
+  | 'Marketing'
+  | 'Bookkeeping'
   | 'Agricultural Science'
   | 'Hausa'
   | 'Igbo'
+  | 'WAEC'
+  | 'NECO'
 
 export interface Question {
   id: string

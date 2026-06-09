@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import type { Screen, ExamType, Subject, Question, UserAnswers } from '../types'
 import { getQuestions } from '../data/questions'
+import { getTheoryQuestions } from '../data/theoryQuestions'
 import { getSmartQuestions, playSound, spawnConfetti, getGrade } from '../utils/helpers'
 
 const OBJ_TIME = 7 * 60
@@ -70,7 +71,7 @@ export function useExam() {
     setState(prev => {
       if (!prev.selectedExam || !prev.selectedSubject) return prev
       const isTheory = prev.selectedExam === 'THEORY'
-      const allQuestions = getQuestions(prev.selectedSubject)
+      const allQuestions = isTheory ? getTheoryQuestions(prev.selectedSubject) : getQuestions(prev.selectedSubject)
       const questions = getSmartQuestions(prev.selectedSubject, prev.selectedExam, allQuestions)
       return {
         ...prev,

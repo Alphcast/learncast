@@ -14,10 +14,14 @@ interface HomeScreenProps {
 }
 
 export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, onSelectExam, onSelectSubject, onSelectUniversity, onStart }: HomeScreenProps) {
-  const subjects = selectedExam ? EXAM_DATA[selectedExam].subjects : []
   const isPostUtme = selectedExam === 'POSTUTME'
+  const isTheory = selectedExam === 'THEORY'
+  const theoryExam = isTheory ? selectedUniversity : null
+  const subjects = selectedExam
+    ? (isTheory && theoryExam ? EXAM_DATA[theoryExam].subjects : EXAM_DATA[selectedExam].subjects)
+    : []
 
-  const canStart = isPostUtme
+  const canStart = (isPostUtme || isTheory)
     ? selectedUniversity && selectedSubject
     : selectedSubject
 
@@ -71,7 +75,7 @@ export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, 
               <div className={`font-nunito font-800 text-[.95rem] ${isSelected ? 'text-[#1565C0] dark:text-[#42A5F5]' : 'text-[#1E293B] dark:text-[#F1F5F9]'}`}>
                 {name}
               </div>
-              <div className="text-[.72rem] text-[#94A3B8] mt-0.5">{data.subjects.length} {name === 'POSTUTME' ? 'universities' : 'subjects'}</div>
+              <div className="text-[.72rem] text-[#94A3B8] mt-0.5">{data.subjects.length} {name === 'POSTUTME' ? 'universities' : name === 'THEORY' ? 'exams' : 'subjects'}</div>
             </div>
           )
         })}
@@ -105,8 +109,36 @@ export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, 
         </div>
       )}
 
-      {/* Subject Grid — POSTUTME: after university selected, others: after exam selected */}
-      {selectedExam && !isPostUtme && (
+      {/* THEORY Exam Grid — choose WAEC or NECO */}
+      {selectedExam && isTheory && !theoryExam && (
+        <div className="animate-fadeIn">
+          <div className="font-nunito text-[1.15rem] font-800 text-[#1E293B] dark:text-[#F1F5F9] mb-3.5 flex items-center gap-2 before:content-[''] before:inline-block before:w-1 before:h-[18px] before:bg-[#2E7D32] before:rounded-[2px]">
+            Choose Exam
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(170px,1fr))] max-sm:grid-cols-2 gap-[10px] mb-7">
+            {subjects.map(exam => {
+              const isSelected = theoryExam === exam
+              return (
+                <button
+                  key={exam}
+                  onClick={() => onSelectUniversity(exam)}
+                  className={`subject-btn rounded-[8px] px-3.5 py-[10px] text-left cursor-pointer transition-all duration-200 font-sora text-[.82rem] flex items-center gap-2 border-[1.5px]
+                    ${isSelected
+                      ? 'border-[#2E7D32] bg-[#E8F5E9] dark:bg-[#1B3A2A] text-[#2E7D32] dark:text-[#66BB6A] font-600'
+                      : 'border-[#DDE4F0] dark:border-[#334155] bg-white dark:bg-[#1E293B] text-[#475569] dark:text-[#94A3B8] hover:border-[#66BB6A] hover:bg-[#E8F5E9] dark:hover:bg-[#1B3A2A] hover:text-[#2E7D32] dark:hover:text-[#66BB6A]'
+                    }`}
+                >
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-200 ${isSelected ? 'bg-[#2E7D32] dark:bg-[#66BB6A]' : 'bg-[#DDE4F0] dark:bg-[#334155]'}`} />
+                  {exam}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Subject Grid — POSTUTME: after university selected, THEORY: after exam selected, others: after exam selected */}
+      {selectedExam && !isPostUtme && !(isTheory && !theoryExam) && (
         <div className="animate-fadeIn">
           <div className="font-nunito text-[1.15rem] font-800 text-[#1E293B] dark:text-[#F1F5F9] mb-3.5 flex items-center gap-2 before:content-[''] before:inline-block before:w-1 before:h-[18px] before:bg-[#2E7D32] before:rounded-[2px]">
             Choose Subject
@@ -167,6 +199,40 @@ export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, 
         </div>
       )}
 
+      {/* THEORY Subject Grid (after exam selected) */}
+      {isTheory && theoryExam && (
+        <div className="animate-fadeIn">
+          <button
+            onClick={() => onSelectUniversity(null)}
+            className="text-[.82rem] text-[#1565C0] dark:text-[#42A5F5] font-600 mb-3 cursor-pointer hover:underline bg-transparent border-none"
+          >
+            ← Back to exams
+          </button>
+          <div className="font-nunito text-[1.15rem] font-800 text-[#1E293B] dark:text-[#F1F5F9] mb-3.5 flex items-center gap-2 before:content-[''] before:inline-block before:w-1 before:h-[18px] before:bg-[#2E7D32] before:rounded-[2px]">
+            Choose Subject for {theoryExam}
+          </div>
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-sm:grid-cols-2 gap-[10px] mb-7">
+            {subjects.map(sub => {
+              const isSelected = selectedSubject === sub
+              return (
+                <button
+                  key={sub}
+                  onClick={() => onSelectSubject(sub)}
+                  className={`subject-btn rounded-[8px] px-3.5 py-[10px] text-left cursor-pointer transition-all duration-200 font-sora text-[.84rem] flex items-center gap-2 border-[1.5px]
+                    ${isSelected
+                      ? 'border-[#2E7D32] bg-[#E8F5E9] dark:bg-[#1B3A2A] text-[#2E7D32] dark:text-[#66BB6A] font-600'
+                      : 'border-[#DDE4F0] dark:border-[#334155] bg-white dark:bg-[#1E293B] text-[#475569] dark:text-[#94A3B8] hover:border-[#66BB6A] hover:bg-[#E8F5E9] dark:hover:bg-[#1B3A2A] hover:text-[#2E7D32] dark:hover:text-[#66BB6A]'
+                    }`}
+                >
+                  <span className={`w-2 h-2 rounded-full flex-shrink-0 transition-all duration-200 ${isSelected ? 'bg-[#2E7D32] dark:bg-[#66BB6A]' : 'bg-[#DDE4F0] dark:bg-[#334155]'}`} />
+                  {sub === 'Literature in English' ? 'Literature' : sub}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Start Section */}
       {selectedExam && canStart && (
         <div className="animate-fadeIn bg-gradient-to-r from-[#1565C0] via-[#1976D2] to-[#2E7D32] rounded-[14px] p-6 text-white text-center shadow-[0_8px_40px_rgba(21,101,192,0.18)]">
@@ -174,8 +240,8 @@ export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, 
           <p className="text-[.85rem] opacity-85 mb-4.5">
             {isPostUtme
               ? `${selectedUniversity} · ${selectedSubject}`
-              : selectedExam === 'THEORY'
-                ? `THEORY · ${selectedSubject}`
+              : isTheory
+                ? `${theoryExam} Theory · ${selectedSubject}`
                 : `${selectedExam} · ${selectedSubject}`}
           </p>
           <div className="flex justify-center gap-4 mb-5 flex-wrap">
