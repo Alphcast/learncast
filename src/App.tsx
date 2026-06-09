@@ -17,6 +17,7 @@ export default function App() {
     nextQuestion,
     prevQuestion,
     confirmSubmit,
+    retryExam,
     goHome,
     toggleDark,
   } = useExam()
@@ -37,7 +38,7 @@ export default function App() {
         />
       )}
 
-      {state.screen === 'cbt' && state.selectedExam && state.selectedSubject && (
+      {state.screen === 'cbt' && state.selectedExam && state.selectedSubject && !state.submitting && (
         <CbtScreen
           examType={state.selectedExam}
           subject={state.selectedSubject}
@@ -54,19 +55,28 @@ export default function App() {
         />
       )}
 
+      {state.submitting && (
+        <div className="flex flex-col items-center justify-center py-24 animate-fadeIn">
+          <div className="w-12 h-12 border-4 border-[#1565C0] border-t-transparent rounded-full animate-spin mb-5" />
+          <p className="font-nunito text-[1.1rem] font-700 text-[#1565C0] dark:text-[#42A5F5]">AI is evaluating your answers...</p>
+          <p className="text-[.85rem] text-[#94A3B8] mt-2">Grading and generating analysis</p>
+        </div>
+      )}
+
       {state.screen === 'result' && state.result && state.selectedExam && state.selectedSubject && (
         <ResultScreen
           examType={state.selectedExam}
           subject={state.selectedSubject}
           questions={state.questions}
           userAnswers={state.userAnswers}
+          evaluations={state.evaluations}
           correct={state.result.correct}
           wrong={state.result.wrong}
           skipped={state.result.skipped}
           pct={state.result.pct}
           grade={state.result.grade}
           emoji={state.result.emoji}
-          onRetry={startExam}
+          onRetry={retryExam}
           onHome={goHome}
         />
       )}

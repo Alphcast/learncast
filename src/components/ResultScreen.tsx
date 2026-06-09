@@ -1,4 +1,4 @@
-import type { Question, UserAnswers, ExamType, Subject } from '../types'
+import type { Question, UserAnswers, ExamType, Subject, TheoryEvaluations } from '../types'
 import { downloadResult } from '../utils/helpers'
 
 interface ResultScreenProps {
@@ -6,6 +6,7 @@ interface ResultScreenProps {
   subject: Subject
   questions: Question[]
   userAnswers: UserAnswers
+  evaluations: TheoryEvaluations | null
   correct: number
   wrong: number
   skipped: number
@@ -21,6 +22,7 @@ export function ResultScreen({
   subject,
   questions,
   userAnswers,
+  evaluations,
   correct,
   wrong,
   skipped,
@@ -49,33 +51,20 @@ export function ResultScreen({
       </div>
 
       {/* Stats */}
-      {isTheory ? (
-        <div className="grid grid-cols-1 gap-3 mb-5">
-          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
-            <strong className="block font-nunito text-[1.5rem] font-900 text-[#1565C0]">{questions.length - skipped}</strong>
-            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Answered</span>
-          </div>
-          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
-            <strong className="block font-nunito text-[1.5rem] font-900 text-[#F9A825]">{skipped}</strong>
-            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Skipped</span>
-          </div>
+      <div className="grid grid-cols-3 max-sm:grid-cols-2 gap-3 mb-5">
+        <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
+          <strong className="block font-nunito text-[1.5rem] font-900 text-[#2E7D32]">{correct}</strong>
+          <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Correct</span>
         </div>
-      ) : (
-        <div className="grid grid-cols-3 max-sm:grid-cols-2 gap-3 mb-5">
-          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
-            <strong className="block font-nunito text-[1.5rem] font-900 text-[#2E7D32]">{correct}</strong>
-            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Correct</span>
-          </div>
-          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
-            <strong className="block font-nunito text-[1.5rem] font-900 text-[#C62828]">{wrong}</strong>
-            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Wrong</span>
-          </div>
-          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)] max-sm:col-span-2">
-            <strong className="block font-nunito text-[1.5rem] font-900 text-[#F9A825]">{skipped}</strong>
-            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Skipped</span>
-          </div>
+        <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
+          <strong className="block font-nunito text-[1.5rem] font-900 text-[#C62828]">{wrong}</strong>
+          <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Wrong</span>
         </div>
-      )}
+        <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)] max-sm:col-span-2">
+          <strong className="block font-nunito text-[1.5rem] font-900 text-[#F9A825]">{skipped}</strong>
+          <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Skipped</span>
+        </div>
+      </div>
 
       {/* Actions */}
       <div className="flex gap-3 justify-center flex-wrap mb-6">
@@ -107,10 +96,12 @@ export function ResultScreen({
         {questions.map((q, i) => {
           const ua = userAnswers[i]
           const answered = ua !== undefined && ua !== ''
-          const icon = isTheory ? (answered ? '📝' : '⚪') : (!answered ? '⚪' : ua === q.answer ? '✅' : '❌')
-          const borderColor = isTheory
-            ? (answered ? 'border-l-[#1565C0]' : 'border-l-[#F9A825]')
-            : (!answered ? 'border-l-[#F9A825]' : ua === q.answer ? 'border-l-[#2E7D32]' : 'border-l-[#C62828]')
+          const ev = evaluations?.[i]
+          const isCorrect = ev?.isCorrect ?? false
+          const icon = !answered ? '⚪' : (isTheory ? (isCorrect ? '✅' : '❌') : (ua === q.answer ? '✅' : '❌'))
+          const borderColor = !answered
+            ? 'border-l-[#F9A825]'
+            : (isTheory ? (isCorrect ? 'border-l-[#2E7D32]' : 'border-l-[#C62828]') : (ua === q.answer ? 'border-l-[#2E7D32]' : 'border-l-[#C62828]'))
 
           return (
             <div
@@ -130,10 +121,31 @@ export function ResultScreen({
                   {q.answer}
                 </div>
               </div>
-              <div className="bg-[#F0F4FA] dark:bg-[#263148] rounded-[6px] px-3 py-[10px] text-[.82rem] text-[#475569] dark:text-[#CBD5E1] leading-[1.6] border-l-3 border-l-[#F9A825]">
-                <span className="font-700 text-[#F9A825] text-[.75rem] block mb-[3px]">💡 Explanation</span>
-                {q.explanation}
-              </div>
+              {/* AI Evaluation for theory */}
+              {isTheory && ev && (
+                <>
+                  <div className={`rounded-[6px] px-3 py-[10px] text-[.82rem] leading-[1.6] border-l-3 mb-[10px] ${ev.isCorrect ? 'bg-[#E8F5E9] dark:bg-[#1B3A2A] border-l-[#2E7D32] text-[#2E7D32] dark:text-[#66BB6A]' : 'bg-[#FFEBEE] dark:bg-[#3A1B1B] border-l-[#C62828] text-[#C62828] dark:text-[#EF9A9A]'}`}>
+                    <span className="font-700 text-[.75rem] block mb-[3px]">{ev.isCorrect ? '✅ AI: Correct' : '❌ AI: Incorrect'}</span>
+                    <div className="whitespace-pre-wrap">{ev.feedback}</div>
+                  </div>
+                  <div className="bg-[#E3F2FD] dark:bg-[#0A1929] rounded-[6px] px-3 py-[10px] text-[.82rem] leading-[1.6] border-l-3 border-l-[#1565C0] text-[#1E293B] dark:text-[#B0C4DE] mb-[10px]">
+                    <span className="font-700 text-[.75rem] block mb-[3px] text-[#1565C0] dark:text-[#42A5F5]">📖 AI Learning Analysis</span>
+                    <div className="whitespace-pre-wrap">{ev.analysis}</div>
+                  </div>
+                </>
+              )}
+              {isTheory && !ev && answered && (
+                <div className="bg-[#FFF8E1] dark:bg-[#2A2318] rounded-[6px] px-3 py-[10px] text-[.82rem] text-[#475569] dark:text-[#CBD5E1] leading-[1.6] border-l-3 border-l-[#F9A825]">
+                  <span className="font-700 text-[#F9A825] text-[.75rem] block mb-[3px]">⚠️ AI Analysis Pending</span>
+                  Your answer was submitted but AI evaluation could not be completed. Compare your answer with the model answer above to assess your understanding.
+                </div>
+              )}
+              {!isTheory && q.explanation && (
+                <div className="bg-[#FFF8E1] dark:bg-[#2A2318] rounded-[6px] px-3 py-[10px] text-[.82rem] text-[#475569] dark:text-[#CBD5E1] leading-[1.6] border-l-3 border-l-[#F9A825]">
+                  <span className="font-700 text-[#F9A825] text-[.75rem] block mb-[3px]">💡 Explanation</span>
+                  {q.explanation}
+                </div>
+              )}
             </div>
           )
         })}

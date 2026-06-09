@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { Screen, ExamType, Subject, Question, UserAnswers } from '../types'
+import type { Screen, ExamType, Subject, Question, UserAnswers, TheoryEvaluations } from '../types'
 import { getQuestions } from '../data/questions'
 import { getTheoryQuestions } from '../data/theoryQuestions'
 import { getSmartQuestions, playSound, spawnConfetti, getGrade } from '../utils/helpers'
+import { evaluateTheoryAnswers } from '../services/aiService'
 
 const OBJ_TIME = 7 * 60
 const THEORY_TIME = 30 * 60
@@ -17,6 +18,8 @@ interface ExamState {
   currentQ: number
   timeLeft: number
   dark: boolean
+  submitting: boolean
+  evaluations: TheoryEvaluations | null
   result: {
     correct: number
     wrong: number
@@ -38,6 +41,8 @@ export function useExam() {
     currentQ: 0,
     timeLeft: OBJ_TIME,
     dark: localStorage.getItem('lch_dark') === 'true',
+    submitting: false,
+    evaluations: null,
     result: null,
   })
 
@@ -81,6 +86,8 @@ export function useExam() {
         currentQ: 0,
         timeLeft: isTheory ? THEORY_TIME : OBJ_TIME,
         result: null,
+        evaluations: null,
+        submitting: false,
       }
     })
   }, [])
@@ -150,35 +157,89 @@ export function useExam() {
     })
   }, [])
 
-  const submitExam = useCallback(() => {
+  const submitExam = useCallback(async () => {
     if (timerRef.current) {
       clearInterval(timerRef.current)
       timerRef.current = null
     }
-    setState(prev => {
-      const isTheory = prev.selectedExam === 'THEORY'
-      let correct = 0
-      let wrong = 0
-      let skipped = 0
-      prev.questions.forEach((q, i) => {
-        const ua = prev.userAnswers[i]
-        if (!ua) skipped++
-        else if (!isTheory && ua === q.answer) correct++
-        else if (!isTheory) wrong++
-        else correct++
-      })
-      const pct = isTheory ? Math.round((correct / prev.questions.length) * 100) : Math.round((correct / prev.questions.length) * 100)
-      const { grade, emoji } = getGrade(pct)
-      const key = `lch_last_score_${prev.selectedExam}_${prev.selectedSubject}`
-      localStorage.setItem(key, JSON.stringify({ score: correct, total: prev.questions.length, pct, grade, date: new Date().toISOString() }))
-      if (pct === 100) setTimeout(spawnConfetti, 300)
-      return {
-        ...prev,
-        screen: 'result',
-        result: { correct, wrong, skipped, pct, grade, emoji },
+
+    const prev = { ...state }
+    const isTheory = prev.selectedExam === 'THEORY'
+    let correct = 0
+    let wrong = 0
+    let skipped = 0
+
+    if (isTheory) {
+      setState(p => ({ ...p, submitting: true }))
+
+      const answeredQuestions = prev.questions
+        .map((q, i) => ({ q, i, ua: prev.userAnswers[i] }))
+        .filter(({ ua }) => ua && ua.trim() !== '')
+
+      skipped = prev.questions.length - answeredQuestions.length
+
+      try {
+        const evaluations = await evaluateTheoryAnswers(
+          answeredQuestions.map(({ q, i, ua }) => ({
+            index: i,
+            question: q.question,
+            modelAnswer: q.answer,
+            userAnswer: ua || '',
+          }))
+        )
+
+        for (const { i } of answeredQuestions) {
+          const ev = evaluations[i]
+          if (ev?.isCorrect) correct++
+          else wrong++
+        }
+
+        const pct = Math.round((correct / prev.questions.length) * 100)
+        const { grade, emoji } = getGrade(pct)
+        const key = `lch_last_score_${prev.selectedExam}_${prev.selectedSubject}`
+        localStorage.setItem(key, JSON.stringify({ score: correct, total: prev.questions.length, pct, grade, date: new Date().toISOString() }))
+        if (pct === 100) setTimeout(spawnConfetti, 300)
+
+        setState(p => ({
+          ...p,
+          screen: 'result',
+          submitting: false,
+          evaluations,
+          result: { correct, wrong, skipped, pct, grade, emoji },
+        }))
+        return
+      } catch {
+        const pct = 0
+        const { grade, emoji } = getGrade(pct)
+        const key = `lch_last_score_${prev.selectedExam}_${prev.selectedSubject}`
+        localStorage.setItem(key, JSON.stringify({ score: 0, total: prev.questions.length, pct, grade, date: new Date().toISOString() }))
+        setState(p => ({
+          ...p,
+          screen: 'result',
+          submitting: false,
+          result: { correct: 0, wrong: prev.questions.length - skipped, skipped, pct, grade, emoji },
+        }))
+        return
       }
+    }
+
+    prev.questions.forEach((q, i) => {
+      const ua = prev.userAnswers[i]
+      if (!ua) skipped++
+      else if (ua === q.answer) correct++
+      else wrong++
     })
-  }, [])
+    const pct = Math.round((correct / prev.questions.length) * 100)
+    const { grade, emoji } = getGrade(pct)
+    const key = `lch_last_score_${prev.selectedExam}_${prev.selectedSubject}`
+    localStorage.setItem(key, JSON.stringify({ score: correct, total: prev.questions.length, pct, grade, date: new Date().toISOString() }))
+    if (pct === 100) setTimeout(spawnConfetti, 300)
+    setState(p => ({
+      ...p,
+      screen: 'result',
+      result: { correct, wrong, skipped, pct, grade, emoji },
+    }))
+  }, [state])
 
   const confirmSubmit = useCallback(() => {
     const answered = Object.keys(state.userAnswers).length
@@ -191,6 +252,16 @@ export function useExam() {
       submitExam()
     }
   }, [state.userAnswers, state.questions.length, submitExam])
+
+  const retryExam = useCallback(() => {
+    setState(prev => ({
+      ...prev,
+      screen: 'home',
+      result: null,
+      evaluations: null,
+      submitting: false,
+    }))
+  }, [])
 
   const toggleDark = useCallback(() => {
     setState(prev => {
@@ -213,6 +284,7 @@ export function useExam() {
     prevQuestion,
     submitExam,
     confirmSubmit,
+    retryExam,
     goHome,
     toggleDark,
   }

@@ -97,3 +97,13 @@ export interface ExamResult {
 }
 
 export type TimerStatus = 'normal' | 'warning' | 'danger'
+
+export interface AnswerEvaluation {
+  isCorrect: boolean
+  feedback: string
+  analysis: string
+}
+
+export interface TheoryEvaluations {
+  [questionIndex: number]: AnswerEvaluation
+}
