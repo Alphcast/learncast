@@ -82,7 +82,7 @@ export interface ExamMeta {
 
 export type ExamData = Record<ExamType, ExamMeta>
 
-export type Screen = 'home' | 'cbt' | 'result'
+export type Screen = 'auth' | 'home' | 'cbt' | 'result'
 
 export interface UserAnswers {
   [questionIndex: number]: string

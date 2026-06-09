@@ -32,7 +32,7 @@ interface ExamState {
 
 export function useExam() {
   const [state, setState] = useState<ExamState>({
-    screen: 'home',
+    screen: localStorage.getItem('lch_auth') === 'true' ? 'home' : 'auth',
     selectedExam: null,
     selectedSubject: null,
     selectedUniversity: null,
@@ -271,6 +271,10 @@ export function useExam() {
     })
   }, [])
 
+  const authSuccess = useCallback(() => {
+    setState(prev => ({ ...prev, screen: 'home' }))
+  }, [])
+
   return {
     state,
     selectExam,
@@ -287,5 +291,6 @@ export function useExam() {
     retryExam,
     goHome,
     toggleDark,
+    authSuccess,
   }
 }

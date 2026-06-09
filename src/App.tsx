@@ -1,4 +1,5 @@
 import { Header } from './components/Header'
+import { AuthScreen } from './components/AuthScreen'
 import { HomeScreen } from './components/HomeScreen'
 import { CbtScreen } from './components/CbtScreen'
 import { ResultScreen } from './components/ResultScreen'
@@ -20,11 +21,16 @@ export default function App() {
     retryExam,
     goHome,
     toggleDark,
+    authSuccess,
   } = useExam()
 
   return (
     <div className="min-h-screen bg-[#F5F8FF] dark:bg-[#0F172A] font-sora">
-      <Header dark={state.dark} onToggleDark={toggleDark} />
+      {state.screen !== 'auth' && <Header dark={state.dark} onToggleDark={toggleDark} />}
+
+      {state.screen === 'auth' && (
+        <AuthScreen onAuthSuccess={authSuccess} />
+      )}
 
       {state.screen === 'home' && (
         <HomeScreen
