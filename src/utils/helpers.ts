@@ -10,16 +10,21 @@ export function shuffleFisherYates<T>(arr: T[]): T[] {
 }
 
 export function getSmartQuestions(subject: Subject, exam: string, allQuestions: Question[]): Question[] {
+  const isTheory = exam === 'THEORY'
+  const limit = isTheory ? 10 : 25
+  if (isTheory) {
+    return shuffleFisherYates(allQuestions).slice(0, 10)
+  }
   const key = `lch_attempted_${exam}_${subject}`
   let attempted: string[] = JSON.parse(localStorage.getItem(key) || '[]')
   let remaining = allQuestions.filter(q => !attempted.includes(q.id))
-  if (remaining.length < 25) {
+  if (remaining.length < limit) {
     attempted = []
     remaining = allQuestions
     localStorage.removeItem(key)
   }
   const shuffled = shuffleFisherYates(remaining)
-  const selected = shuffled.slice(0, 25)
+  const selected = shuffled.slice(0, limit)
   const newAttempted = [...attempted, ...selected.map(q => q.id)]
   localStorage.setItem(key, JSON.stringify(newAttempted))
   return selected
@@ -66,6 +71,7 @@ export function showToast(msg: string) {
 }
 
 export function downloadResult(exam: string, subject: string, questions: Question[], userAnswers: Record<number, string>) {
+  const isTheory = exam === 'THEORY'
   const lines: string[] = [
     'LearnCast Hub – Exam Result',
     `Exam: ${exam}`,
@@ -75,14 +81,16 @@ export function downloadResult(exam: string, subject: string, questions: Questio
     '--- DETAILED REVIEW ---',
     '',
   ]
-  let correct = 0
   questions.forEach((q, i) => {
     const ua = userAnswers[i]
-    const status = !ua ? 'SKIPPED' : ua === q.answer ? 'CORRECT' : 'WRONG'
-    if (status === 'CORRECT') correct++
+    const status = !ua ? 'NOT ANSWERED' : 'ANSWERED'
     lines.push(`Q${i + 1} [${status}]: ${q.question}`)
     lines.push(`Your answer: ${ua || 'Not answered'}`)
-    lines.push(`Correct: ${q.answer}`)
+    if (isTheory) {
+      lines.push(`Model answer: ${q.answer}`)
+    } else {
+      lines.push(`Correct answer: ${q.answer}`)
+    }
     lines.push(`Explanation: ${q.explanation}`)
     lines.push('')
   })

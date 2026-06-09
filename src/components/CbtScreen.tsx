@@ -9,6 +9,7 @@ interface CbtScreenProps {
   currentQ: number
   timeLeft: number
   onSelectOption: (opt: string) => void
+  onTypeAnswer: (text: string) => void
   onGoToQuestion: (index: number) => void
   onNext: () => void
   onPrev: () => void
@@ -25,11 +26,13 @@ export function CbtScreen({
   currentQ,
   timeLeft,
   onSelectOption,
+  onTypeAnswer,
   onGoToQuestion,
   onNext,
   onPrev,
   onSubmit,
 }: CbtScreenProps) {
+  const isTheory = examType === 'THEORY'
   const q = questions[currentQ]
   const total = questions.length
   const timerStatus = getTimerStatus(timeLeft)
@@ -89,29 +92,39 @@ export function CbtScreen({
           <div className="font-nunito text-[1.05rem] font-700 text-[#1E293B] dark:text-[#F1F5F9] leading-[1.55] mb-5">
             {q.question}
           </div>
-          <ul className="list-none flex flex-col gap-[10px]">
-            {q.options.map((opt, i) => {
-              const isSelected = userAnswers[currentQ] === opt
-              return (
-                <li
-                  key={i}
-                  onClick={() => onSelectOption(opt)}
-                  className={`flex items-start gap-3 rounded-[10px] px-3.5 py-3 cursor-pointer transition-all duration-[180ms] text-[.9rem] border-2
-                    ${isSelected
-                      ? 'border-[#1565C0] bg-[#E3F2FD] dark:bg-[#1E3A5F] text-[#1565C0] dark:text-[#42A5F5] font-600'
-                      : 'border-[#DDE4F0] dark:border-[#334155] bg-[#F0F4FA] dark:bg-[#263148] text-[#475569] dark:text-[#CBD5E1] hover:border-[#42A5F5] hover:bg-[#E3F2FD] dark:hover:bg-[#1E3A5F]'
-                    }`}
-                >
-                  <span className={`w-[26px] h-[26px] rounded-full flex items-center justify-center font-800 text-[.8rem] flex-shrink-0 transition-all duration-[180ms] font-nunito
-                    ${isSelected ? 'bg-[#1565C0] dark:bg-[#42A5F5] text-white' : 'bg-[#DDE4F0] dark:bg-[#334155] text-[#475569] dark:text-[#94A3B8]'}`}
+          {isTheory ? (
+            <textarea
+              value={userAnswers[currentQ] || ''}
+              onChange={e => onTypeAnswer(e.target.value)}
+              placeholder="Type your answer here..."
+              rows={8}
+              className="w-full rounded-[10px] px-3.5 py-3 text-[.9rem] border-2 border-[#DDE4F0] dark:border-[#334155] bg-[#F0F4FA] dark:bg-[#263148] text-[#475569] dark:text-[#CBD5E1] focus:border-[#1565C0] dark:focus:border-[#42A5F5] focus:outline-none resize-y font-nunito leading-[1.6]"
+            />
+          ) : (
+            <ul className="list-none flex flex-col gap-[10px]">
+              {q.options.map((opt, i) => {
+                const isSelected = userAnswers[currentQ] === opt
+                return (
+                  <li
+                    key={i}
+                    onClick={() => onSelectOption(opt)}
+                    className={`flex items-start gap-3 rounded-[10px] px-3.5 py-3 cursor-pointer transition-all duration-[180ms] text-[.9rem] border-2
+                      ${isSelected
+                        ? 'border-[#1565C0] bg-[#E3F2FD] dark:bg-[#1E3A5F] text-[#1565C0] dark:text-[#42A5F5] font-600'
+                        : 'border-[#DDE4F0] dark:border-[#334155] bg-[#F0F4FA] dark:bg-[#263148] text-[#475569] dark:text-[#CBD5E1] hover:border-[#42A5F5] hover:bg-[#E3F2FD] dark:hover:bg-[#1E3A5F]'
+                      }`}
                   >
-                    {LETTERS[i]}
-                  </span>
-                  <span className="leading-[1.5] pt-0.5">{opt}</span>
-                </li>
-              )
-            })}
-          </ul>
+                    <span className={`w-[26px] h-[26px] rounded-full flex items-center justify-center font-800 text-[.8rem] flex-shrink-0 transition-all duration-[180ms] font-nunito
+                      ${isSelected ? 'bg-[#1565C0] dark:bg-[#42A5F5] text-white' : 'bg-[#DDE4F0] dark:bg-[#334155] text-[#475569] dark:text-[#94A3B8]'}`}
+                    >
+                      {LETTERS[i]}
+                    </span>
+                    <span className="leading-[1.5] pt-0.5">{opt}</span>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
           <div className="flex justify-between items-center mt-5 gap-3 flex-wrap">
             <div className="flex gap-2">
               <button
@@ -146,7 +159,7 @@ export function CbtScreen({
           <div className="grid grid-cols-5 gap-[6px]">
             {questions.map((_, i) => {
               const isCurrent = i === currentQ
-              const isAnswered = userAnswers[i] !== undefined
+              const isAnswered = userAnswers[i] !== undefined && userAnswers[i] !== ''
               let dotClass = 'bg-[#F0F4FA] dark:bg-[#263148] border-[#DDE4F0] dark:border-[#334155] text-[#475569] dark:text-[#94A3B8]'
               if (isCurrent) dotClass = 'bg-[#1565C0] dark:bg-[#42A5F5] border-[#1565C0] dark:border-[#42A5F5] text-white'
               else if (isAnswered) dotClass = 'bg-[#E8F5E9] dark:bg-[#1B3A2A] border-[#66BB6A] dark:border-[#66BB6A] text-[#2E7D32] dark:text-[#66BB6A]'

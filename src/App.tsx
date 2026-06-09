@@ -12,6 +12,7 @@ export default function App() {
     selectUniversity,
     startExam,
     selectOption,
+    typeAnswer,
     goToQuestion,
     nextQuestion,
     prevQuestion,
@@ -45,6 +46,7 @@ export default function App() {
           currentQ={state.currentQ}
           timeLeft={state.timeLeft}
           onSelectOption={selectOption}
+          onTypeAnswer={typeAnswer}
           onGoToQuestion={goToQuestion}
           onNext={nextQuestion}
           onPrev={prevQuestion}

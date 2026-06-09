@@ -3,7 +3,8 @@ import type { Screen, ExamType, Subject, Question, UserAnswers } from '../types'
 import { getQuestions } from '../data/questions'
 import { getSmartQuestions, playSound, spawnConfetti, getGrade } from '../utils/helpers'
 
-const TOTAL_TIME = 7 * 60
+const OBJ_TIME = 7 * 60
+const THEORY_TIME = 30 * 60
 
 interface ExamState {
   screen: Screen
@@ -34,7 +35,7 @@ export function useExam() {
     questions: [],
     userAnswers: {},
     currentQ: 0,
-    timeLeft: TOTAL_TIME,
+    timeLeft: OBJ_TIME,
     dark: localStorage.getItem('lch_dark') === 'true',
     result: null,
   })
@@ -68,6 +69,7 @@ export function useExam() {
   const startExam = useCallback(() => {
     setState(prev => {
       if (!prev.selectedExam || !prev.selectedSubject) return prev
+      const isTheory = prev.selectedExam === 'THEORY'
       const allQuestions = getQuestions(prev.selectedSubject)
       const questions = getSmartQuestions(prev.selectedSubject, prev.selectedExam, allQuestions)
       return {
@@ -76,7 +78,7 @@ export function useExam() {
         questions,
         userAnswers: {},
         currentQ: 0,
-        timeLeft: TOTAL_TIME,
+        timeLeft: isTheory ? THEORY_TIME : OBJ_TIME,
         result: null,
       }
     })
@@ -118,6 +120,13 @@ export function useExam() {
     }))
   }, [])
 
+  const typeAnswer = useCallback((text: string) => {
+    setState(prev => ({
+      ...prev,
+      userAnswers: { ...prev.userAnswers, [prev.currentQ]: text },
+    }))
+  }, [])
+
   const goToQuestion = useCallback((index: number) => {
     setState(prev => ({ ...prev, currentQ: index }))
   }, [])
@@ -146,16 +155,18 @@ export function useExam() {
       timerRef.current = null
     }
     setState(prev => {
+      const isTheory = prev.selectedExam === 'THEORY'
       let correct = 0
       let wrong = 0
       let skipped = 0
       prev.questions.forEach((q, i) => {
         const ua = prev.userAnswers[i]
         if (!ua) skipped++
-        else if (ua === q.answer) correct++
-        else wrong++
+        else if (!isTheory && ua === q.answer) correct++
+        else if (!isTheory) wrong++
+        else correct++
       })
-      const pct = Math.round((correct / prev.questions.length) * 100)
+      const pct = isTheory ? Math.round((correct / prev.questions.length) * 100) : Math.round((correct / prev.questions.length) * 100)
       const { grade, emoji } = getGrade(pct)
       const key = `lch_last_score_${prev.selectedExam}_${prev.selectedSubject}`
       localStorage.setItem(key, JSON.stringify({ score: correct, total: prev.questions.length, pct, grade, date: new Date().toISOString() }))
@@ -195,6 +206,7 @@ export function useExam() {
     selectUniversity,
     startExam,
     selectOption,
+    typeAnswer,
     goToQuestion,
     nextQuestion,
     prevQuestion,

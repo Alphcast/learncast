@@ -172,12 +172,25 @@ export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, 
         <div className="animate-fadeIn bg-gradient-to-r from-[#1565C0] via-[#1976D2] to-[#2E7D32] rounded-[14px] p-6 text-white text-center shadow-[0_8px_40px_rgba(21,101,192,0.18)]">
           <h3 className="font-nunito text-[1.1rem] font-800 mb-1.5">Ready to Test Yourself?</h3>
           <p className="text-[.85rem] opacity-85 mb-4.5">
-            {isPostUtme ? `${selectedUniversity} · ${selectedSubject}` : `${selectedExam} · ${selectedSubject}`} — 25 questions, 7 minutes
+            {isPostUtme
+              ? `${selectedUniversity} · ${selectedSubject}`
+              : selectedExam === 'THEORY'
+                ? `THEORY · ${selectedSubject}`
+                : `${selectedExam} · ${selectedSubject}`}
           </p>
           <div className="flex justify-center gap-4 mb-5 flex-wrap">
-            <div className="bg-white/15 rounded-[8px] px-4 py-2 text-[.82rem] font-600">📝 25 Questions</div>
-            <div className="bg-white/15 rounded-[8px] px-4 py-2 text-[.82rem] font-600">⏱️ 7 Minutes</div>
-            <div className="bg-white/15 rounded-[8px] px-4 py-2 text-[.82rem] font-600">🔄 Smart Rotation</div>
+            {selectedExam === 'THEORY' ? (
+              <>
+                <div className="bg-white/15 rounded-[8px] px-4 py-2 text-[.82rem] font-600">📝 10 Questions</div>
+                <div className="bg-white/15 rounded-[8px] px-4 py-2 text-[.82rem] font-600">⏱️ 30 Minutes</div>
+              </>
+            ) : (
+              <>
+                <div className="bg-white/15 rounded-[8px] px-4 py-2 text-[.82rem] font-600">📝 25 Questions</div>
+                <div className="bg-white/15 rounded-[8px] px-4 py-2 text-[.82rem] font-600">⏱️ 7 Minutes</div>
+                <div className="bg-white/15 rounded-[8px] px-4 py-2 text-[.82rem] font-600">🔄 Smart Rotation</div>
+              </>
+            )}
           </div>
           <button
             onClick={onStart}

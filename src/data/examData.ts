@@ -1,7 +1,7 @@
 import type { ExamData, ExamType } from '../types'
 
 export const EXAM_DATA: ExamData = {
-  JAMB: { icon: '🎓', subjects: ['Use of English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Commerce', 'Accounting', 'Literature in English', 'Government', 'CRS', 'Islamic Studies', 'Yoruba', 'Arabic'] },
+  JAMB: { icon: '🎓', subjects: ['Use of English', 'Mathematics', 'Physics', 'Chemistry', 'Biology', 'Economics', 'Commerce', 'Accounting', 'Literature in English', 'Government', 'CRS', 'Islamic Studies', 'Yoruba', 'Arabic', 'French', 'Agricultural Science', 'Hausa', 'Igbo'] },
   WAEC: { icon: '📘', subjects: ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Economics', 'Commerce', 'Financial Accounting', 'Literature in English', 'Government', 'CRS', 'Civic Education', 'Computer Studies'] },
   NECO: { icon: '📗', subjects: ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Economics', 'Commerce', 'Literature in English', 'Government', 'CRS'] },
   GCE: { icon: '📙', subjects: ['English Language', 'Mathematics', 'Biology', 'Chemistry', 'Physics', 'Economics'] },

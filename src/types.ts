@@ -18,6 +18,7 @@ export type Subject =
   | 'Yoruba'
   | 'Arabic'
   | 'Civic Education'
+  | 'French'
   | 'Computer Studies'
   | 'Reading'
   | 'Listening'
@@ -55,6 +56,9 @@ export type Subject =
   | 'Baze University'
   | 'Afe Babalola University'
   | 'Ajayi Crowther University'
+  | 'Agricultural Science'
+  | 'Hausa'
+  | 'Igbo'
 
 export interface Question {
   id: string

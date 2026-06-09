@@ -30,6 +30,7 @@ export function ResultScreen({
   onRetry,
   onHome,
 }: ResultScreenProps) {
+  const isTheory = examType === 'THEORY'
   return (
     <div id="result-screen" className="max-w-[720px] mx-auto px-4 py-6 pb-12 animate-fadeIn">
       {/* Result Hero */}
@@ -48,20 +49,33 @@ export function ResultScreen({
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 max-sm:grid-cols-2 gap-3 mb-5">
-        <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
-          <strong className="block font-nunito text-[1.5rem] font-900 text-[#2E7D32]">{correct}</strong>
-          <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Correct</span>
+      {isTheory ? (
+        <div className="grid grid-cols-1 gap-3 mb-5">
+          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
+            <strong className="block font-nunito text-[1.5rem] font-900 text-[#1565C0]">{questions.length - skipped}</strong>
+            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Answered</span>
+          </div>
+          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
+            <strong className="block font-nunito text-[1.5rem] font-900 text-[#F9A825]">{skipped}</strong>
+            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Skipped</span>
+          </div>
         </div>
-        <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
-          <strong className="block font-nunito text-[1.5rem] font-900 text-[#C62828]">{wrong}</strong>
-          <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Wrong</span>
+      ) : (
+        <div className="grid grid-cols-3 max-sm:grid-cols-2 gap-3 mb-5">
+          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
+            <strong className="block font-nunito text-[1.5rem] font-900 text-[#2E7D32]">{correct}</strong>
+            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Correct</span>
+          </div>
+          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
+            <strong className="block font-nunito text-[1.5rem] font-900 text-[#C62828]">{wrong}</strong>
+            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Wrong</span>
+          </div>
+          <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)] max-sm:col-span-2">
+            <strong className="block font-nunito text-[1.5rem] font-900 text-[#F9A825]">{skipped}</strong>
+            <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Skipped</span>
+          </div>
         </div>
-        <div className="bg-white dark:bg-[#1E293B] rounded-[8px] p-4 text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)] max-sm:col-span-2">
-          <strong className="block font-nunito text-[1.5rem] font-900 text-[#F9A825]">{skipped}</strong>
-          <span className="text-[.76rem] text-[#94A3B8] block mt-0.5">Skipped</span>
-        </div>
-      </div>
+      )}
 
       {/* Actions */}
       <div className="flex gap-3 justify-center flex-wrap mb-6">
@@ -92,12 +106,11 @@ export function ResultScreen({
         </h3>
         {questions.map((q, i) => {
           const ua = userAnswers[i]
-          let status: 'correct' | 'wrong' | 'skipped' = 'skipped'
-          if (ua && ua === q.answer) status = 'correct'
-          else if (ua && ua !== q.answer) status = 'wrong'
-          const icon = status === 'correct' ? '✅' : status === 'wrong' ? '❌' : '⚪'
-          const borderColor =
-            status === 'correct' ? 'border-l-[#2E7D32]' : status === 'wrong' ? 'border-l-[#C62828]' : 'border-l-[#F9A825]'
+          const answered = ua !== undefined && ua !== ''
+          const icon = isTheory ? (answered ? '📝' : '⚪') : (!answered ? '⚪' : ua === q.answer ? '✅' : '❌')
+          const borderColor = isTheory
+            ? (answered ? 'border-l-[#1565C0]' : 'border-l-[#F9A825]')
+            : (!answered ? 'border-l-[#F9A825]' : ua === q.answer ? 'border-l-[#2E7D32]' : 'border-l-[#C62828]')
 
           return (
             <div
@@ -108,12 +121,12 @@ export function ResultScreen({
                 {icon} Q{i + 1}: {q.question}
               </div>
               <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-2 mb-[10px] text-[.82rem]">
-                <div className={`rounded-[6px] p-2 ${status === 'wrong' ? 'bg-[#FFEBEE] dark:bg-[#3E1A1A] border-[1px] border-[#FFCDD2]' : 'bg-[#E3F2FD] dark:bg-[#1E3A5F] border-[1px] border-[#42A5F5]'}`}>
+                <div className="rounded-[6px] p-2 bg-[#E3F2FD] dark:bg-[#1E3A5F] border-[1px] border-[#42A5F5]">
                   <label className="block font-700 text-[.72rem] mb-0.5 text-[#94A3B8]">Your Answer</label>
-                  {ua || 'Not answered'}
+                  <div className="whitespace-pre-wrap">{answered ? ua : 'Not answered'}</div>
                 </div>
                 <div className="bg-[#E8F5E9] dark:bg-[#1B3A2A] rounded-[6px] p-2 border-[1px] border-[#C8E6C9]">
-                  <label className="block font-700 text-[.72rem] mb-0.5 text-[#94A3B8]">Correct Answer</label>
+                  <label className="block font-700 text-[.72rem] mb-0.5 text-[#94A3B8]">{isTheory ? 'Model Answer' : 'Correct Answer'}</label>
                   {q.answer}
                 </div>
               </div>
