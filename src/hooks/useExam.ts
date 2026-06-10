@@ -1,9 +1,59 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
-import type { Screen, ExamType, Subject, Question, UserAnswers, TheoryEvaluations } from '../types'
+import type { Screen, ExamType, Subject, Question, UserAnswers, TheoryEvaluations, SubscriptionPlan } from '../types'
 import { getQuestions } from '../data/questions'
 import { getTheoryQuestions } from '../data/theoryQuestions'
 import { getSmartQuestions, playSound, spawnConfetti, getGrade } from '../utils/helpers'
 import { evaluateTheoryAnswers } from '../services/aiService'
+
+const FREE_TRIALS = 3
+const MONTHLY_PRICE = 2000
+const YEARLY_PRICE = 20000
+
+function getMonthKey(): string {
+  const d = new Date()
+  return `lch_attempts_${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+function getAttempts(): number {
+  try {
+    return Number(localStorage.getItem(getMonthKey())) || 0
+  } catch {
+    return 0
+  }
+}
+
+function incrementAttempts(): void {
+  const key = getMonthKey()
+  const current = getAttempts()
+  localStorage.setItem(key, String(current + 1))
+}
+
+function getSubscriptionState(): { plan: SubscriptionPlan; expiry: string | null } {
+  try {
+    const plan = localStorage.getItem('lch_sub_plan') as SubscriptionPlan
+    const expiry = localStorage.getItem('lch_sub_expiry')
+    if (plan && expiry && new Date(expiry) > new Date()) {
+      return { plan, expiry }
+    }
+    if (plan) {
+      localStorage.removeItem('lch_sub_plan')
+      localStorage.removeItem('lch_sub_expiry')
+    }
+  } catch {
+    // ignore
+  }
+  return { plan: null, expiry: null }
+}
+
+function canStartExam(): boolean {
+  const { plan, expiry } = getSubscriptionState()
+  if (plan && expiry && new Date(expiry) > new Date()) return true
+  return getAttempts() < FREE_TRIALS
+}
+
+function attemptsRemaining(): number {
+  return Math.max(0, FREE_TRIALS - getAttempts())
+}
 
 const OBJ_TIME = 7 * 60
 const THEORY_TIME = 30 * 60
@@ -73,11 +123,19 @@ export function useExam() {
   }, [])
 
   const startExam = useCallback(() => {
+    if (!canStartExam()) {
+      setState(prev => ({ ...prev, screen: 'subscription' }))
+      return
+    }
     setState(prev => {
       if (!prev.selectedExam || !prev.selectedSubject) return prev
       const isTheory = prev.selectedExam === 'THEORY'
       const allQuestions = isTheory ? getTheoryQuestions(prev.selectedSubject) : getQuestions(prev.selectedSubject)
       const questions = getSmartQuestions(prev.selectedSubject, prev.selectedExam, allQuestions)
+      const { plan, expiry } = getSubscriptionState()
+      if (!(plan && expiry && new Date(expiry) > new Date())) {
+        incrementAttempts()
+      }
       return {
         ...prev,
         screen: 'cbt',
@@ -275,6 +333,32 @@ export function useExam() {
     setState(prev => ({ ...prev, screen: 'home' }))
   }, [])
 
+  const subscribe = useCallback((plan: 'monthly' | 'yearly') => {
+    const expiry = new Date()
+    expiry.setDate(expiry.getDate() + (plan === 'yearly' ? 365 : 30))
+    localStorage.setItem('lch_sub_plan', plan)
+    localStorage.setItem('lch_sub_expiry', expiry.toISOString())
+    setState(prev => ({ ...prev, screen: 'home' }))
+  }, [])
+
+  const dismissSubscription = useCallback(() => {
+    const { plan, expiry } = getSubscriptionState()
+    if (plan && expiry && new Date(expiry) > new Date()) {
+      setState(prev => ({ ...prev, screen: 'home' }))
+    } else if (getAttempts() < FREE_TRIALS) {
+      setState(prev => ({ ...prev, screen: 'home' }))
+    }
+  }, [])
+
+  const logoutFromSub = useCallback(() => {
+    localStorage.removeItem('lch_auth')
+    localStorage.removeItem('lch_user')
+    setState(prev => ({ ...prev, screen: 'auth' }))
+  }, [])
+
+  const { plan: subPlan, expiry: subExpiry } = getSubscriptionState()
+  const isSubscribed = !!(subPlan && subExpiry && new Date(subExpiry) > new Date())
+
   return {
     state,
     selectExam,
@@ -292,5 +376,15 @@ export function useExam() {
     goHome,
     toggleDark,
     authSuccess,
+    subscribe,
+    dismissSubscription,
+    logoutFromSub,
+    attemptsRemaining: attemptsRemaining(),
+    isSubscribed,
+    subPlan,
+    subExpiry,
+    MONTHLY_PRICE,
+    YEARLY_PRICE,
+    FREE_TRIALS,
   }
 }

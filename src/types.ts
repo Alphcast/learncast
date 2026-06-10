@@ -82,7 +82,14 @@ export interface ExamMeta {
 
 export type ExamData = Record<ExamType, ExamMeta>
 
-export type Screen = 'auth' | 'home' | 'cbt' | 'result'
+export type Screen = 'auth' | 'home' | 'cbt' | 'result' | 'subscription'
+
+export type SubscriptionPlan = 'monthly' | 'yearly' | null
+
+export interface SubscriptionState {
+  plan: SubscriptionPlan
+  expiry: string | null
+}
 
 export interface UserAnswers {
   [questionIndex: number]: string

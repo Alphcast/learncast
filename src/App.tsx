@@ -3,6 +3,7 @@ import { AuthScreen } from './components/AuthScreen'
 import { HomeScreen } from './components/HomeScreen'
 import { CbtScreen } from './components/CbtScreen'
 import { ResultScreen } from './components/ResultScreen'
+import { SubscriptionScreen } from './components/SubscriptionScreen'
 import { useExam } from './hooks/useExam'
 
 export default function App() {
@@ -22,6 +23,13 @@ export default function App() {
     goHome,
     toggleDark,
     authSuccess,
+    subscribe,
+    dismissSubscription,
+    logoutFromSub,
+    attemptsRemaining,
+    isSubscribed,
+    subPlan,
+    subExpiry,
   } = useExam()
 
   return (
@@ -30,6 +38,18 @@ export default function App() {
 
       {state.screen === 'auth' && (
         <AuthScreen onAuthSuccess={authSuccess} />
+      )}
+
+      {state.screen === 'subscription' && (
+        <SubscriptionScreen
+          attemptsRemaining={attemptsRemaining}
+          isSubscribed={isSubscribed}
+          subPlan={subPlan}
+          subExpiry={subExpiry}
+          onSubscribe={subscribe}
+          onDismiss={dismissSubscription}
+          onLogout={logoutFromSub}
+        />
       )}
 
       {state.screen === 'home' && (
