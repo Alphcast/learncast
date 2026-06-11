@@ -350,6 +350,10 @@ export function useExam() {
     }
   }, [])
 
+  const showSubscription = useCallback(() => {
+    setState(prev => ({ ...prev, screen: 'subscription' }))
+  }, [])
+
   const logoutFromSub = useCallback(() => {
     localStorage.removeItem('lch_auth')
     localStorage.removeItem('lch_user')
@@ -378,6 +382,7 @@ export function useExam() {
     authSuccess,
     subscribe,
     dismissSubscription,
+    showSubscription,
     logoutFromSub,
     attemptsRemaining: attemptsRemaining(),
     isSubscribed,

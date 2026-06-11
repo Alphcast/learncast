@@ -11,9 +11,14 @@ interface HomeScreenProps {
   onSelectSubject: (subject: Subject) => void
   onSelectUniversity: (university: Subject | null) => void
   onStart: () => void
+  attemptsRemaining: number
+  isSubscribed: boolean
+  subPlan: string | null
+  subExpiry: string | null
+  onShowSubscription: () => void
 }
 
-export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, onSelectExam, onSelectSubject, onSelectUniversity, onStart }: HomeScreenProps) {
+export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, onSelectExam, onSelectSubject, onSelectUniversity, onStart, attemptsRemaining, isSubscribed, subPlan, subExpiry, onShowSubscription }: HomeScreenProps) {
   const isPostUtme = selectedExam === 'POSTUTME'
   const isTheory = selectedExam === 'THEORY'
   const theoryExam = isTheory ? selectedUniversity : null
@@ -51,6 +56,35 @@ export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, 
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Subscription Banner */}
+      <div className={`mb-6 rounded-[12px] px-4 py-3 flex items-center justify-between gap-3 border-2 ${isSubscribed ? 'bg-[#E8F5E9] dark:bg-[#1B3A2A] border-[#66BB6A]' : attemptsRemaining > 0 ? 'bg-[#FFF8E1] dark:bg-[#3E3520] border-[#F9A825]' : 'bg-[#FFEBEE] dark:bg-[#3E1A1A] border-[#EF5350]'}`}>
+        <div className="flex items-center gap-3">
+          <span className="text-[1.3rem]">{isSubscribed ? '⭐' : attemptsRemaining > 0 ? '📋' : '🔒'}</span>
+          <div>
+            <p className={`font-nunito font-700 text-[.85rem] ${isSubscribed ? 'text-[#2E7D32] dark:text-[#66BB6A]' : attemptsRemaining > 0 ? 'text-[#E65100] dark:text-[#FFB74D]' : 'text-[#C62828] dark:text-[#EF9A9A]'}`}>
+              {isSubscribed
+                ? `Subscribed (${subPlan === 'yearly' ? 'Yearly' : 'Monthly'})`
+                : attemptsRemaining > 0
+                  ? `${attemptsRemaining} free ${attemptsRemaining === 1 ? 'trial' : 'trials'} remaining`
+                  : 'Free trials used up'}
+            </p>
+            <p className={`text-[.72rem] ${isSubscribed ? 'text-[#388E3C] dark:text-[#A5D6A7]' : 'text-[#78909C] dark:text-[#94A3B8]'}`}>
+              {isSubscribed
+                ? subExpiry ? `Expires ${new Date(subExpiry).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}` : ''
+                : attemptsRemaining > 0
+                  ? 'Subscribe for unlimited access'
+                  : 'Subscribe to continue practising'}
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onShowSubscription}
+          className={`rounded-[8px] px-4 py-2 font-nunito font-800 text-[.8rem] cursor-pointer border-none transition-all duration-200 whitespace-nowrap ${isSubscribed ? 'bg-[#2E7D32] text-white hover:bg-[#1B5E20]' : 'bg-gradient-to-r from-[#1565C0] to-[#1976D2] text-white hover:from-[#1976D2] hover:to-[#1565C0] shadow-[0_2px_8px_rgba(21,101,192,0.3)]'}`}
+        >
+          {isSubscribed ? 'Manage' : 'Subscribe'}
+        </button>
       </div>
 
       {/* Exam Grid */}

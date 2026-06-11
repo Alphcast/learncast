@@ -25,6 +25,7 @@ export default function App() {
     authSuccess,
     subscribe,
     dismissSubscription,
+    showSubscription,
     logoutFromSub,
     attemptsRemaining,
     isSubscribed,
@@ -61,6 +62,11 @@ export default function App() {
           onSelectSubject={selectSubject}
           onSelectUniversity={selectUniversity}
           onStart={startExam}
+          attemptsRemaining={attemptsRemaining}
+          isSubscribed={isSubscribed}
+          subPlan={subPlan}
+          subExpiry={subExpiry}
+          onShowSubscription={showSubscription}
         />
       )}
 
