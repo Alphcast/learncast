@@ -48,7 +48,7 @@ export function HomeScreen({ selectedExam, selectedSubject, selectedUniversity, 
           {[
             { num: String(EXAM_TYPES.length), label: 'Exam Types' },
             { num: '18', label: 'Subjects' },
-            { num: '500+', label: 'Questions' },
+            { num: '3000+', label: 'Questions' },
           ].map(s => (
             <div key={s.label} className="bg-white dark:bg-[#1E293B] border-[1.5px] border-[#E3F2FD] dark:border-[#1E3A5F] rounded-[10px] px-5 py-[10px] text-center shadow-[0_2px_8px_rgba(21,101,192,0.10)]">
               <strong className="block font-nunito text-[1.3rem] font-900 text-[#1565C0] dark:text-[#42A5F5]">{s.num}</strong>
