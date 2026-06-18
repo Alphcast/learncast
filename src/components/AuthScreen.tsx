@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { api } from '../services/api'
+import { useState, useEffect } from 'react'
+import { api, isBackendAvailable } from '../services/api'
 
 interface AuthScreenProps {
   onAuthSuccess: () => void
@@ -10,6 +10,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   const [form, setForm] = useState({ email: '', password: '', name: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [offline, setOffline] = useState(false)
+
+  useEffect(() => {
+    isBackendAvailable().then(available => setOffline(!available))
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,6 +25,11 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
       if (isLogin) {
         result = await api.login(form.email, form.password)
       } else {
+        if (form.password.length < 8) {
+          setError('Password must be at least 8 characters')
+          setLoading(false)
+          return
+        }
         result = await api.register(form.email, form.name, form.password)
       }
       localStorage.setItem('lch_token', result.token)
@@ -53,6 +63,13 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             Practice Smart, Excel with Confidence
           </p>
         </div>
+
+        {/* Offline banner */}
+        {offline && (
+          <div className="bg-[#FFF8E1] dark:bg-[#3E3520] border-[1.5px] border-[#F9A825] text-[#5D4E37] dark:text-[#FFE082] rounded-[10px] px-4 py-[10px] text-[.78rem] mb-5 text-center leading-[1.5]">
+            ⚡ Server is offline — using offline mode. Your account data is saved locally.
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex bg-[#DDE4F0] dark:bg-[#334155] rounded-[10px] p-1 mb-5">
@@ -140,6 +157,14 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
             </button>
           </p>
         </form>
+
+        {offline && (
+          <div className="mt-5 rounded-[10px] p-3 bg-[#F0F4FA] dark:bg-[#263148] text-center">
+            <p className="text-[.72rem] text-[#94A3B8] leading-[1.5]">
+              Start the backend server with <code className="bg-[#DDE4F0] dark:bg-[#334155] px-1.5 py-0.5 rounded text-[.7rem]">cd server && npm run dev</code> for cloud-synced accounts and payments.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   )

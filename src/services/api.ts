@@ -12,7 +12,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
   if (token) headers['Authorization'] = `Bearer ${token}`
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers })
+  let res: Response
+  try {
+    res = await fetch(`${API_URL}${path}`, { ...options, headers })
+  } catch {
+    throw new Error('Failed to connect to server. Make sure the backend is running.')
+  }
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: 'Request failed' }))
@@ -20,6 +25,12 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   }
 
   return res.json()
+}
+
+export function isBackendAvailable(): Promise<boolean> {
+  return fetch(`${API_URL}/health`, { method: 'GET', signal: AbortSignal.timeout(3000) })
+    .then(r => r.ok)
+    .catch(() => false)
 }
 
 export interface AuthResponse {
@@ -55,19 +66,63 @@ export interface AttemptResponse {
   attemptsRemaining: number
 }
 
+const LOCAL_USERS_KEY = 'lch_local_users'
+
+function getLocalUsers(): Record<string, { email: string; name: string; password: string }> {
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_USERS_KEY) || '{}')
+  } catch {
+    return {}
+  }
+}
+
+function saveLocalUsers(users: Record<string, { email: string; name: string; password: string }>) {
+  localStorage.setItem(LOCAL_USERS_KEY, JSON.stringify(users))
+}
+
+let localUserIdCounter = 1
+
 export const api = {
-  register(email: string, name: string, password: string) {
-    return request<AuthResponse>('/auth/register', {
-      method: 'POST',
-      body: JSON.stringify({ email, name, password }),
-    })
+  async register(email: string, name: string, password: string): Promise<AuthResponse> {
+    try {
+      return await request<AuthResponse>('/auth/register', {
+        method: 'POST',
+        body: JSON.stringify({ email, name, password }),
+      })
+    } catch (err) {
+      if ((err as Error).message.includes('Failed to connect')) {
+        const users = getLocalUsers()
+        if (users[email]) throw new Error('Email already registered')
+        const id = localUserIdCounter++
+        users[email] = { email, name, password }
+        saveLocalUsers(users)
+        const token = `local_${id}_${Date.now()}`
+        localStorage.setItem('lch_token', token)
+        return { token, user: { id, email, name } }
+      }
+      throw err
+    }
   },
 
-  login(email: string, password: string) {
-    return request<AuthResponse>('/auth/login', {
-      method: 'POST',
-      body: JSON.stringify({ email, password }),
-    })
+  async login(email: string, password: string): Promise<AuthResponse> {
+    try {
+      return await request<AuthResponse>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      })
+    } catch (err) {
+      if ((err as Error).message.includes('Failed to connect')) {
+        const users = getLocalUsers()
+        const user = users[email]
+        if (!user) throw new Error('No account found. Please sign up first.')
+        if (user.password !== password) throw new Error('Invalid email or password')
+        const id = Number(Object.keys(users).indexOf(email) + 1)
+        const token = `local_${id}_${Date.now()}`
+        localStorage.setItem('lch_token', token)
+        return { token, user: { id, email, name: user.name } }
+      }
+      throw err
+    }
   },
 
   getStatus() {
