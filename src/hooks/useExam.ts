@@ -4,6 +4,7 @@ import { getQuestions } from '../data/questions'
 import { getTheoryQuestions } from '../data/theoryQuestions'
 import { getSmartQuestions, playSound, spawnConfetti, getGrade } from '../utils/helpers'
 import { evaluateTheoryAnswers } from '../services/aiService'
+import { api } from '../services/api'
 
 const FREE_TRIALS = 3
 const MONTHLY_PRICE = 2000
@@ -95,7 +96,6 @@ export function useExam() {
     evaluations: null,
     result: null,
   })
-
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -105,6 +105,28 @@ export function useExam() {
       document.documentElement.classList.remove('dark')
     }
   }, [state.dark])
+
+  const refreshFromApi = useCallback(async () => {
+    const token = localStorage.getItem('lch_token')
+    if (!token) return
+    try {
+      const status = await api.getStatus()
+      if (status.subscribed && status.plan && status.expiry) {
+        localStorage.setItem('lch_sub_plan', status.plan)
+        localStorage.setItem('lch_sub_expiry', status.expiry)
+      } else {
+        localStorage.removeItem('lch_sub_plan')
+        localStorage.removeItem('lch_sub_expiry')
+      }
+      if (status.attemptsRemaining !== undefined) {
+        const monthKey = getMonthKey()
+        const used = FREE_TRIALS - status.attemptsRemaining
+        localStorage.setItem(monthKey, String(used))
+      }
+    } catch {
+      // API unavailable — use localStorage values
+    }
+  }, [])
 
   const goHome = useCallback(() => {
     setState(prev => ({ ...prev, screen: 'home', selectedExam: null, selectedSubject: null }))
@@ -122,7 +144,7 @@ export function useExam() {
     setState(prev => ({ ...prev, selectedSubject: subject }))
   }, [])
 
-  const startExam = useCallback(() => {
+  const startExam = useCallback(async () => {
     if (!canStartExam()) {
       setState(prev => ({ ...prev, screen: 'subscription' }))
       return
@@ -135,6 +157,9 @@ export function useExam() {
       const { plan, expiry } = getSubscriptionState()
       if (!(plan && expiry && new Date(expiry) > new Date())) {
         incrementAttempts()
+        if (localStorage.getItem('lch_token')) {
+          api.recordAttempt().catch(() => {})
+        }
       }
       return {
         ...prev,
@@ -331,7 +356,8 @@ export function useExam() {
 
   const authSuccess = useCallback(() => {
     setState(prev => ({ ...prev, screen: 'home' }))
-  }, [])
+    refreshFromApi()
+  }, [refreshFromApi])
 
   const subscribe = useCallback((plan: 'monthly' | 'yearly') => {
     const expiry = new Date()
@@ -339,7 +365,8 @@ export function useExam() {
     localStorage.setItem('lch_sub_plan', plan)
     localStorage.setItem('lch_sub_expiry', expiry.toISOString())
     setState(prev => ({ ...prev, screen: 'home' }))
-  }, [])
+    refreshFromApi()
+  }, [refreshFromApi])
 
   const dismissSubscription = useCallback(() => {
     const { plan, expiry } = getSubscriptionState()
@@ -357,6 +384,9 @@ export function useExam() {
   const logoutFromSub = useCallback(() => {
     localStorage.removeItem('lch_auth')
     localStorage.removeItem('lch_user')
+    localStorage.removeItem('lch_token')
+    localStorage.removeItem('lch_sub_plan')
+    localStorage.removeItem('lch_sub_expiry')
     setState(prev => ({ ...prev, screen: 'auth' }))
   }, [])
 

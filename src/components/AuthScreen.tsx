@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { api } from '../services/api'
 
 interface AuthScreenProps {
   onAuthSuccess: () => void
@@ -7,12 +8,29 @@ interface AuthScreenProps {
 export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
   const [isLogin, setIsLogin] = useState(true)
   const [form, setForm] = useState({ email: '', password: '', name: '' })
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    localStorage.setItem('lch_auth', 'true')
-    localStorage.setItem('lch_user', form.name || form.email)
-    onAuthSuccess()
+    setError('')
+    setLoading(true)
+    try {
+      let result
+      if (isLogin) {
+        result = await api.login(form.email, form.password)
+      } else {
+        result = await api.register(form.email, form.name, form.password)
+      }
+      localStorage.setItem('lch_token', result.token)
+      localStorage.setItem('lch_auth', 'true')
+      localStorage.setItem('lch_user', result.user.name)
+      onAuthSuccess()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Authentication failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -39,18 +57,25 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
         {/* Tabs */}
         <div className="flex bg-[#DDE4F0] dark:bg-[#334155] rounded-[10px] p-1 mb-5">
           <button
-            onClick={() => setIsLogin(true)}
+            onClick={() => { setIsLogin(true); setError('') }}
             className={`flex-1 py-[9px] rounded-[8px] font-nunito text-[.9rem] font-700 cursor-pointer transition-all duration-200 ${isLogin ? 'bg-white dark:bg-[#1E293B] text-[#1565C0] dark:text-[#42A5F5] shadow-sm' : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#1565C0]'}`}
           >
             Login
           </button>
           <button
-            onClick={() => setIsLogin(false)}
+            onClick={() => { setIsLogin(false); setError('') }}
             className={`flex-1 py-[9px] rounded-[8px] font-nunito text-[.9rem] font-700 cursor-pointer transition-all duration-200 ${!isLogin ? 'bg-white dark:bg-[#1E293B] text-[#1565C0] dark:text-[#42A5F5] shadow-sm' : 'text-[#475569] dark:text-[#94A3B8] hover:text-[#1565C0]'}`}
           >
             Sign Up
           </button>
         </div>
+
+        {/* Error */}
+        {error && (
+          <div className="bg-[#FFEBEE] dark:bg-[#3E1A1A] border-[1.5px] border-[#EF5350] text-[#C62828] dark:text-[#EF9A9A] rounded-[10px] px-4 py-[10px] text-[.82rem] mb-5 text-center">
+            {error}
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="bg-white dark:bg-[#1E293B] rounded-[14px] p-6 shadow-[0_2px_12px_rgba(21,101,192,0.10)]">
@@ -91,16 +116,24 @@ export function AuthScreen({ onAuthSuccess }: AuthScreenProps) {
           </div>
           <button
             type="submit"
-            className="w-full bg-gradient-to-r from-[#1565C0] to-[#1976D2] hover:from-[#1976D2] hover:to-[#1565C0] text-white rounded-[10px] py-3 font-nunito text-[.95rem] font-800 cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(21,101,192,0.3)] hover:shadow-[0_6px_20px_rgba(21,101,192,0.4)]"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-[#1565C0] to-[#1976D2] hover:from-[#1976D2] hover:to-[#1565C0] text-white rounded-[10px] py-3 font-nunito text-[.95rem] font-800 cursor-pointer transition-all duration-200 shadow-[0_4px_15px_rgba(21,101,192,0.3)] hover:shadow-[0_6px_20px_rgba(21,101,192,0.4)] disabled:opacity-60 flex items-center justify-center gap-2"
           >
-            {isLogin ? 'Login' : 'Create Account'}
+            {loading ? (
+              <>
+                <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                {isLogin ? 'Logging in...' : 'Creating account...'}
+              </>
+            ) : (
+              isLogin ? 'Login' : 'Create Account'
+            )}
           </button>
 
           <p className="text-center text-[.78rem] text-[#94A3B8] mt-4">
             {isLogin ? "Don't have an account? " : 'Already have an account? '}
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => { setIsLogin(!isLogin); setError('') }}
               className="text-[#1565C0] dark:text-[#42A5F5] font-700 bg-transparent border-none cursor-pointer hover:underline"
             >
               {isLogin ? 'Sign Up' : 'Login'}
