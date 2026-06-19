@@ -1,3 +1,5 @@
+import { SignedOut, SignedIn, SignInButton, SignUpButton, UserButton } from '@clerk/clerk-react'
+
 interface HeaderProps {
   dark: boolean
   onToggleDark: () => void
@@ -21,12 +23,35 @@ export function Header({ dark, onToggleDark }: HeaderProps) {
         <div className="text-[.78rem] text-[#475569] dark:text-[#94A3B8] italic hidden sm:block">
           Practice Smart, Excel with Confidence
         </div>
-        <button
-          onClick={onToggleDark}
-          className="bg-[#F0F4FA] dark:bg-[#263148] border-[1.5px] border-[#DDE4F0] dark:border-[#334155] rounded-[20px] px-[14px] py-[5px] cursor-pointer text-[.82rem] text-[#475569] dark:text-[#94A3B8] font-sora transition-all duration-200 hover:bg-[#E3F2FD] hover:text-[#1565C0] dark:hover:bg-[#1E3A5F] dark:hover:text-[#42A5F5]"
-        >
-          {dark ? '☀️ Light Mode' : '🌙 Dark Mode'}
-        </button>
+        <div className="flex items-center gap-3">
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="bg-[#1565C0] text-white border-none rounded-[8px] px-4 py-[6px] text-[.82rem] font-700 cursor-pointer hover:bg-[#1976D2] transition-colors">
+                Sign In
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="bg-[#2E7D32] text-white border-none rounded-[8px] px-4 py-[6px] text-[.82rem] font-700 cursor-pointer hover:bg-[#388E3C] transition-colors">
+                Sign Up
+              </button>
+            </SignUpButton>
+          </SignedOut>
+          <SignedIn>
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'w-[38px] h-[38px]',
+                },
+              }}
+            />
+          </SignedIn>
+          <button
+            onClick={onToggleDark}
+            className="bg-[#F0F4FA] dark:bg-[#263148] border-[1.5px] border-[#DDE4F0] dark:border-[#334155] rounded-[20px] px-[14px] py-[5px] cursor-pointer text-[.82rem] text-[#475569] dark:text-[#94A3B8] font-sora transition-all duration-200 hover:bg-[#E3F2FD] hover:text-[#1565C0] dark:hover:bg-[#1E3A5F] dark:hover:text-[#42A5F5]"
+          >
+            {dark ? '☀️ Light Mode' : '🌙 Dark Mode'}
+          </button>
+        </div>
       </div>
     </header>
   )

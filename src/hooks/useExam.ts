@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { useUser, useClerk } from '@clerk/clerk-react'
 import type { Screen, ExamType, Subject, Question, UserAnswers, TheoryEvaluations, SubscriptionPlan } from '../types'
 import { getQuestions } from '../data/questions'
 import { getTheoryQuestions } from '../data/theoryQuestions'
@@ -82,8 +83,11 @@ interface ExamState {
 }
 
 export function useExam() {
+  const { isSignedIn, isLoaded } = useUser()
+  const { signOut } = useClerk()
+
   const [state, setState] = useState<ExamState>({
-    screen: localStorage.getItem('lch_auth') === 'true' ? 'home' : 'auth',
+    screen: 'auth',
     selectedExam: null,
     selectedSubject: null,
     selectedUniversity: null,
@@ -127,6 +131,18 @@ export function useExam() {
       // API unavailable — use localStorage values
     }
   }, [])
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      setState(prev => {
+        if (prev.screen === 'auth') {
+          return { ...prev, screen: 'home' }
+        }
+        return prev
+      })
+      refreshFromApi()
+    }
+  }, [isLoaded, isSignedIn, refreshFromApi])
 
   const goHome = useCallback(() => {
     setState(prev => ({ ...prev, screen: 'home', selectedExam: null, selectedSubject: null }))
@@ -354,11 +370,6 @@ export function useExam() {
     })
   }, [])
 
-  const authSuccess = useCallback(() => {
-    setState(prev => ({ ...prev, screen: 'home' }))
-    refreshFromApi()
-  }, [refreshFromApi])
-
   const subscribe = useCallback((plan: 'monthly' | 'yearly') => {
     const expiry = new Date()
     expiry.setDate(expiry.getDate() + (plan === 'yearly' ? 365 : 30))
@@ -382,13 +393,11 @@ export function useExam() {
   }, [])
 
   const logoutFromSub = useCallback(() => {
-    localStorage.removeItem('lch_auth')
-    localStorage.removeItem('lch_user')
-    localStorage.removeItem('lch_token')
     localStorage.removeItem('lch_sub_plan')
     localStorage.removeItem('lch_sub_expiry')
+    signOut()
     setState(prev => ({ ...prev, screen: 'auth' }))
-  }, [])
+  }, [signOut])
 
   const { plan: subPlan, expiry: subExpiry } = getSubscriptionState()
   const isSubscribed = !!(subPlan && subExpiry && new Date(subExpiry) > new Date())
@@ -409,7 +418,6 @@ export function useExam() {
     retryExam,
     goHome,
     toggleDark,
-    authSuccess,
     subscribe,
     dismissSubscription,
     showSubscription,

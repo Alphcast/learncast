@@ -22,7 +22,6 @@ export default function App() {
     retryExam,
     goHome,
     toggleDark,
-    authSuccess,
     subscribe,
     dismissSubscription,
     showSubscription,
@@ -37,9 +36,7 @@ export default function App() {
     <div className="min-h-screen bg-[#F5F8FF] dark:bg-[#0F172A] font-sora">
       {state.screen !== 'auth' && <Header dark={state.dark} onToggleDark={toggleDark} />}
 
-      {state.screen === 'auth' && (
-        <AuthScreen onAuthSuccess={authSuccess} />
-      )}
+      {state.screen === 'auth' && <AuthScreen />}
 
       {state.screen === 'subscription' && (
         <SubscriptionScreen
