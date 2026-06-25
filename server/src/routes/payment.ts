@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import crypto from 'crypto'
+import Paystack from 'paystack'
 import { body, validationResult } from 'express-validator'
 import { dbRun, dbGet } from '../db'
 import { authMiddleware, type AuthRequest } from '../middleware/auth'
@@ -9,6 +10,7 @@ const router = Router()
 const MONTHLY_PRICE = 2000
 const YEARLY_PRICE = 20000
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || ''
+const paystack = PAYSTACK_SECRET_KEY ? Paystack(PAYSTACK_SECRET_KEY) : null
 
 function getMonthKey(): string {
   const d = new Date()
@@ -85,7 +87,7 @@ router.post('/initialize',
       [req.userId!, reference, amount, plan, 'card', 'pending']
     )
 
-    if (!PAYSTACK_SECRET_KEY) {
+    if (!paystack) {
       res.json({
         accessCode: null,
         reference,
@@ -98,34 +100,26 @@ router.post('/initialize',
     }
 
     try {
-      const initRes = await fetch('https://api.paystack.co/transaction/initialize', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: user?.email || 'user@learncast.com',
-          amount: amount * 100,
-          currency: 'NGN',
-          reference,
-          metadata: { userId: req.userId, plan },
-        }),
+      const response = await paystack.transaction.initialize({
+        email: user?.email || 'user@learncast.com',
+        amount: amount * 100,
+        currency: 'NGN',
+        reference,
+        metadata: { userId: req.userId, plan },
       })
 
-      const data = await initRes.json() as { status: boolean; data: { access_code: string; reference: string }; message?: string }
-
-      if (!data.status) {
+      if (!response.status) {
         dbRun("UPDATE transactions SET status = 'failed' WHERE reference = ?", [reference])
-        res.status(500).json({ error: data.message || 'Failed to initialize payment with Paystack' })
+        res.status(500).json({ error: (response as any).message || 'Failed to initialize payment with Paystack' })
         return
       }
 
-      dbRun('UPDATE transactions SET access_code = ? WHERE reference = ?', [data.data.access_code, data.data.reference])
+      const data = response.data as { access_code: string; reference: string }
+      dbRun('UPDATE transactions SET access_code = ? WHERE reference = ?', [data.access_code, data.reference])
 
       res.json({
-        accessCode: data.data.access_code,
-        reference: data.data.reference,
+        accessCode: data.access_code,
+        reference: data.reference,
         publicKey,
         amount,
         currency: 'NGN',
@@ -162,28 +156,23 @@ router.post('/verify',
       return
     }
 
-    if (!PAYSTACK_SECRET_KEY) {
+    if (!paystack) {
       const sub = activateSubscription(req.userId!, tx.plan as 'monthly' | 'yearly', reference)
       res.json({ status: 'success', subscription: sub, simulated: true })
       return
     }
 
     try {
-      const verifyRes = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, {
-        headers: { 'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}` },
-      })
-      const data = await verifyRes.json() as {
-        status: boolean
-        data: { status: string; amount: number; metadata?: { plan?: string } }
-      }
+      const response = await paystack.transaction.verify({ reference })
 
-      if (!data.status) {
+      if (!response.status) {
         dbRun("UPDATE transactions SET status = 'failed' WHERE id = ?", [tx.id])
         res.json({ status: 'failed', subscription: null })
         return
       }
 
-      const paystackAmount = data.data.amount
+      const data = response.data as { status: string; amount: number; metadata?: { plan?: string } }
+      const paystackAmount = data.amount
       const expectedAmount = tx.amount * 100
       if (paystackAmount !== expectedAmount) {
         console.error(`Amount mismatch: expected ${expectedAmount}, got ${paystackAmount}`)
@@ -192,8 +181,8 @@ router.post('/verify',
         return
       }
 
-      if (data.data.status === 'success') {
-        const plan = (data.data.metadata?.plan || tx.plan) as 'monthly' | 'yearly'
+      if (data.status === 'success') {
+        const plan = (data.metadata?.plan || tx.plan) as 'monthly' | 'yearly'
         const sub = activateSubscription(req.userId!, plan, reference)
         res.json({ status: 'success', subscription: sub })
       } else {

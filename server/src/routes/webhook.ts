@@ -1,10 +1,12 @@
 import { Router } from 'express'
 import crypto from 'crypto'
+import Paystack from 'paystack'
 import { dbRun, dbGet } from '../db'
 
 const router = Router()
 
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || ''
+const paystack = PAYSTACK_SECRET_KEY ? Paystack(PAYSTACK_SECRET_KEY) : null
 
 interface PaystackEvent {
   event: string
@@ -25,7 +27,7 @@ router.post('/paystack', (req, res) => {
     return
   }
 
-  if (!PAYSTACK_SECRET_KEY) {
+  if (!paystack) {
     res.status(200).json({ status: 'ignored' })
     return
   }
@@ -35,7 +37,9 @@ router.post('/paystack', (req, res) => {
     .update(rawBody)
     .digest('hex')
 
-  if (hash !== signature) {
+  const sigBuffer = Buffer.from(signature)
+  const hashBuffer = Buffer.from(hash)
+  if (sigBuffer.length !== hashBuffer.length || !crypto.timingSafeEqual(sigBuffer, hashBuffer)) {
     console.error('Paystack webhook: invalid signature')
     res.status(401).json({ error: 'Invalid signature' })
     return

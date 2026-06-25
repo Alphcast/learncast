@@ -17,6 +17,7 @@
     "express-validator": "^7.3.2",
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.2",
+    "paystack": "^2.0.1",
     "sql.js": "^1.14.1"
   },
   "devDependencies": {
