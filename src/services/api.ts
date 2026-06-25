@@ -149,13 +149,6 @@ export const api = {
     })
   },
 
-  activateTransfer(plan: 'monthly' | 'yearly') {
-    return request<PaymentVerifyResponse>('/payment/activate-transfer', {
-      method: 'POST',
-      body: JSON.stringify({ plan }),
-    })
-  },
-
   healthCheck() {
     return request<{ status: string }>('/health')
   },
