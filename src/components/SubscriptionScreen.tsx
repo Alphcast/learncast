@@ -1,8 +1,8 @@
 import { useState, useCallback } from 'react'
-import { api } from '../services/api'
 
 const MONTHLY_PRICE = 2000
 const YEARLY_PRICE = 20000
+const PUB_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_b59e4f9f827e6957e88b6dc02ff428abb26be816'
 
 interface SubscriptionScreenProps {
   attemptsRemaining: number
@@ -50,33 +50,23 @@ export function SubscriptionScreen({
     }
   })()
 
-  const handlePlanClick = useCallback(async (plan: 'monthly' | 'yearly') => {
+  const handlePlanClick = useCallback((plan: 'monthly' | 'yearly') => {
     setError('')
     setPaying(plan)
 
-    try {
-      const init = await api.initializePayment(plan)
+    const amount = plan === 'monthly' ? MONTHLY_PRICE : YEARLY_PRICE
+    const ref = `LCH-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 
+    try {
       const handler = window.PaystackPop.setup({
-        key: init.publicKey || import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || '',
+        key: PUB_KEY,
         email: userEmail,
-        amount: init.amount * 100,
-        currency: init.currency || 'NGN',
-        ref: init.reference,
-        onSuccess: async () => {
-          try {
-            const verify = await api.verifyPayment(init.reference)
-            if (verify.status === 'success') {
-              setPaying(null)
-              onSubscribe(plan)
-            } else {
-              setError('Payment verification failed. Please contact support.')
-              setPaying(null)
-            }
-          } catch {
-            setPaying(null)
-            onSubscribe(plan)
-          }
+        amount: amount * 100,
+        currency: 'NGN',
+        ref,
+        onSuccess: () => {
+          setPaying(null)
+          onSubscribe(plan)
         },
         onCancel: () => {
           setPaying(null)
