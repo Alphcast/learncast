@@ -42,8 +42,8 @@ export function AuthScreen() {
         <div className="bg-white dark:bg-[#1E293B] rounded-[14px] p-6 shadow-[0_2px_12px_rgba(21,101,192,0.10)]">
           {mode === 'sign-in' ? (
             <SignIn
+              routing="virtual"
               signUpUrl="#"
-              afterSignInUrl="/"
               appearance={{
                 elements: {
                   rootBox: 'w-full',
@@ -67,8 +67,8 @@ export function AuthScreen() {
             />
           ) : (
             <SignUp
+              routing="virtual"
               signInUrl="#"
-              afterSignUpUrl="/"
               appearance={{
                 elements: {
                   rootBox: 'w-full',
