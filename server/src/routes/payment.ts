@@ -78,7 +78,7 @@ router.post('/initialize',
 
     const amount = plan === 'monthly' ? MONTHLY_PRICE : YEARLY_PRICE
     const reference = `LCH-${Date.now()}-${crypto.randomBytes(8).toString('hex')}`
-    const publicKey = process.env.VITE_PAYSTACK_PUBLIC_KEY || ''
+    const publicKey = process.env.PAYSTACK_PUBLIC_KEY || process.env.VITE_PAYSTACK_PUBLIC_KEY || ''
 
     const user = dbGet<{ email: string }>('SELECT email FROM users WHERE id = ?', [req.userId!])
 

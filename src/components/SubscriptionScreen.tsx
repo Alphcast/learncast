@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react'
 
 const MONTHLY_PRICE = 2000
 const YEARLY_PRICE = 20000
-const PUB_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_b59e4f9f827e6957e88b6dc02ff428abb26be816'
+const PUB_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_76e3cc7d3f307ffef68137d5d8aee35c3bb44baf'
 
 interface SubscriptionScreenProps {
   attemptsRemaining: number
